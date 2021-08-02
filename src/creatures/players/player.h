@@ -2135,6 +2135,8 @@ class Player final : public Creature, public Cylinder
 		int32_t UnlockedRunesBit = 0;
 		std::pair<ConditionType_t, uint64_t> cleanseCondition = {CONDITION_NONE, 0};
 
+                uint32_t getReborn() const;
+
 		// New Prey
 		uint16_t preyBonusRerolls = 0;
 		std::vector<uint16_t> preySlotState = {0, 0, 0};

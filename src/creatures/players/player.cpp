@@ -122,7 +122,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 	std::ostringstream s;
 
 	if (lookDistance == -1) {
-		s << "yourself.";
+		s << "yourself. (Level " << level << ") [Reset " << getReborn() << "].";
 
 		if (group->access) {
 			s << " You are " << group->name << '.';
@@ -134,7 +134,7 @@ std::string Player::getDescription(int32_t lookDistance) const
 	} else {
 		s << name;
 		if (!group->access) {
-			s << " (Level " << level << ')';
+			s << " (Level " << level << ") [Reset " << getReborn() << "]";
 		}
 		s << '.';
 
@@ -1997,8 +1997,6 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 	}
 
 	if (prevLevel != level) {
-		health = healthMax;
-		mana = manaMax;
 
 		updateBaseSpeed();
 		setBaseSpeed(getBaseSpeed());
@@ -4797,6 +4795,15 @@ uint8_t Player::getCurrentMount() const
 {
 	int32_t value;
 	if (getStorageValue(PSTRG_MOUNTS_CURRENTMOUNT, value)) {
+		return value;
+	}
+	return 0;
+}
+
+uint32_t Player::getReborn() const
+{
+	int32_t value;
+	if (getStorageValue(5123513, value)) {
 		return value;
 	}
 	return 0;

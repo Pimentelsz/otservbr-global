@@ -20,7 +20,7 @@ matrix:
 
 only_commits:
   files:
-    - src1/
+    - src/
     - vc14/
     - .appveyor.yml
     - cmake/

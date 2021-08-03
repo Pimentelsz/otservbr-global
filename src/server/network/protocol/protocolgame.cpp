@@ -6377,15 +6377,15 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 {
 	msg.addByte(0xA0);
 
-    if (player->getHealth() < 65535) {
+        if (player->getHealth() > 65535) {
+            msg.add<uint16_t>(std::min<int32_t>(player->getHealth() * 100 / player->getMaxHealth(), std::numeric_limits<uint16_t>::max()));
+            msg.add<uint16_t>(100);
+        }
+        else
+        {
 	    msg.add<uint16_t>(std::min<int32_t>(player->getHealth(), std::numeric_limits<uint16_t>::max()));
 	    msg.add<uint16_t>(std::min<int32_t>(player->getMaxHealth(), std::numeric_limits<uint16_t>::max()));
-    }
-
-    if (player->getHealth() > 65535) {
-        msg.add<uint16_t>(std::min<int32_t>(player->getHealth() * 100 / player->getMaxHealth(), std::numeric_limits<uint16_t>::max()));
-        msg.add<uint16_t>(100);
-    }
+        }
 
 	msg.add<uint32_t>(player->getFreeCapacity());
 	if (version < 1200) {
@@ -6404,16 +6404,16 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 	msg.add<uint16_t>(player->getGrindingXpBoost()); // low level bonus
 	msg.add<uint16_t>(player->getStoreXpBoost()); // xp boost
 	msg.add<uint16_t>(player->getStaminaXpBoost()); // stamina multiplier (100 = 1.0x)
-        
-    if (player->getMana() < 65535) {
+
+        if (player->getMana() > 65535) {
+            msg.add<uint16_t>(std::min<int32_t>(player->getMana() * 100 / player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
+            msg.add<uint16_t>(100);
+        }
+        else
+        {
 	    msg.add<uint16_t>(std::min<int32_t>(player->getMana(), std::numeric_limits<uint16_t>::max()));
 	    msg.add<uint16_t>(std::min<int32_t>(player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
-    }
-
-    if (player->getMana() > 65535) {
-        msg.add<uint16_t>(std::min<int32_t>(player->getMana() * 100 / player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
-        msg.add<uint16_t>(100);
-    }
+        }
 
 	if (version < 1200) {
 		msg.addByte(std::min<uint32_t>(player->getMagicLevel(), std::numeric_limits<uint8_t>::max()));

@@ -2921,6 +2921,7 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod("Vocation", "getId", LuaScriptInterface::luaVocationGetId);
 	registerMethod("Vocation", "getClientId", LuaScriptInterface::luaVocationGetClientId);
+        registerMethod("Vocation", "getBaseId", LuaScriptInterface::luaGetBaseId);
 	registerMethod("Vocation", "getName", LuaScriptInterface::luaVocationGetName);
 	registerMethod("Vocation", "getDescription", LuaScriptInterface::luaVocationGetDescription);
 
@@ -8281,7 +8282,7 @@ int LuaScriptInterface::luaCreatureReload(lua_State* L)
 
 	const Position& position = creature->getPosition();
 	SpectatorHashSet spectators;
-	g_game.map.getSpectators(spectators, position, false, true); // 3 parÃ¢metro Ã© multifloor, ver se hÃ¡ necessidade de usar.
+	g_game.map.getSpectators(spectators, position, false, true); // 3 parâmetro é multifloor, ver se há necessidade de usar.
 	for (Creature* spectator : spectators) {
 		Player* tmpPlayer = spectator->getPlayer();
 		if (tmpPlayer) {
@@ -13216,6 +13217,18 @@ int LuaScriptInterface::luaVocationGetName(lua_State* L)
 	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		pushString(L, vocation->getVocName());
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaGetBaseId(lua_State* L)
+{
+	// vocation:getBaseId()
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
+	if (vocation) {
+		lua_pushnumber(L, vocation->getBaseId());
 	} else {
 		lua_pushnil(L);
 	}

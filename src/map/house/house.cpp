@@ -442,7 +442,7 @@ HouseTransferItem* HouseTransferItem::createHouseTransferItem(House* house)
 	transferItem->setID(ITEM_DOCUMENT_RO);
 	transferItem->setSubType(1);
 	std::ostringstream ss;
-	ss << "It is a house transfer document for '" << house->getName() << "'.";
+	ss << "Transferência da casa '" << house->getName() << "'.";
 	transferItem->setSpecialDescription(ss.str());
 	return transferItem;
 }
@@ -774,19 +774,19 @@ void Houses::payHouses(RentPeriod_t rentPeriod) const
 
 				switch (rentPeriod) {
 					case RENTPERIOD_DAILY:
-						period = "daily";
+						period = "dia";
 						break;
 
 					case RENTPERIOD_WEEKLY:
-						period = "weekly";
+						period = "semana";
 						break;
 
 					case RENTPERIOD_MONTHLY:
-						period = "monthly";
+						period = "mês";
 						break;
 
 					case RENTPERIOD_YEARLY:
-						period = "annual";
+						period = "ano";
 						break;
 
 					default:
@@ -794,7 +794,7 @@ void Houses::payHouses(RentPeriod_t rentPeriod) const
 				}
 
 				std::ostringstream ss;
-				ss << "Warning! \nThe " << period << " rent of " << house->getRent() << " gold for your house \"" << house->getName() << "\" is payable. Have it within " << daysLeft << " days or you will lose this house.";
+				ss << "Atenção! \nO aluguel " << period << " da sua casa "" << house->getName() << "" que custa " << house->getRent() << "gps está atrasado. Tenha esse valor em seu banco ou perderá a casa em " << daysLeft << " dias.";
 				letter->setText(ss.str());
 				g_game.internalAddItem(player.getInbox(), letter, INDEX_WHEREEVER, FLAG_NOLIMIT);
 				house->setPayRentWarnings(house->getPayRentWarnings() + 1);

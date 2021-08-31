@@ -253,13 +253,13 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 
 		if (g_game.getGameState() == GAME_STATE_CLOSING && !player->hasFlag(PlayerFlag_CanAlwaysLogin))
 		{
-			disconnectClient("The game is just going down.\nPlease try again later.");
+			disconnectClient("O servidor está reiniciado.\nPor favor, tente novamente mais tarde.");
 			return;
 		}
 
 		if (g_game.getGameState() == GAME_STATE_CLOSED && !player->hasFlag(PlayerFlag_CanAlwaysLogin))
 		{
-			disconnectClient("Server is currently closed.\nPlease try again later.");
+			disconnectClient("O servidor está manuntenção.\nPor favor, tente novamente mais tarde.");
 			return;
 		}
 
@@ -271,7 +271,7 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 
 		if (g_config.getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) && player->getAccountType() < account::ACCOUNT_TYPE_GAMEMASTER && g_game.getPlayerByAccount(player->getAccount()))
 		{
-			disconnectClient("You may only login with one character\nof your account at the same time.");
+			disconnectClient("Existe um personagem desta conta logada no servidor.\nDeslogue o personagem e tente novamente.");
 			return;
 		}
 
@@ -288,12 +288,12 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 				std::ostringstream ss;
 				if (banInfo.expiresAt > 0)
 				{
-					ss << "Your account has been banned until " << formatDateShort(banInfo.expiresAt) << " by " << banInfo.bannedBy << ".\n\nReason specified:\n"
+					ss << "A sua conta está banida até o dia " << formatDateShort(banInfo.expiresAt) << ".\n\nMotivo:\n"
 					   << banInfo.reason;
 				}
 				else
 				{
-					ss << "Your account has been permanently banned by " << banInfo.bannedBy << ".\n\nReason specified:\n"
+					ss << "A sua conta está banida permanentemente.\nMotivo:\n"
 					   << banInfo.reason;
 				}
 				disconnectClient(ss.str());
@@ -388,7 +388,7 @@ void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem)
 	Player *foundPlayer = g_game.getPlayerByID(playerId);
 	if (!foundPlayer || foundPlayer->client)
 	{
-		disconnectClient("You are already logged in.");
+		disconnectClient(""Existe um personagem desta conta logada no servidor.\nDeslogue o personagem e tente novamente.");
 		return;
 	}
 
@@ -510,7 +510,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	size_t pos = sessionKey.find('\n');
 	if (pos == std::string::npos)
 	{
-		disconnectClient("You must enter your account name.");
+		disconnectClient("Você precisa informar o nome da sua conta.");
 		return;
 	}
 
@@ -524,7 +524,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	std::string accountName = sessionKey.substr(0, pos);
 	if (accountName.empty())
 	{
-		disconnectClient("You must enter your account name.");
+		disconnectClient("Você precisa informar o nome da sua conta.");
 		return;
 	}
 
@@ -543,23 +543,23 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	if (clientVersion != g_config.getNumber(ConfigManager::CLIENT_VERSION) && (allowClientOld && version != 1100))
 	{
 		std::ostringstream ss;
-		ss << "Only clients with protocol " << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
+		ss << "Apenas a versão " << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
 		if (allowClientOld)
-			ss << " and 10.00";
-			ss << " allowed!";
+			ss << " e 10.00";
+			ss << " são permitidos.";
 			disconnectClient(ss.str());
 		return;
 	}
 
 	if (g_game.getGameState() == GAME_STATE_STARTUP)
 	{
-		disconnectClient("Gameworld is starting up. Please wait.");
+		disconnectClient("O servidor está sendo iniciado. Por favor, tente novamente mais tarde.");
 		return;
 	}
 
 	if (g_game.getGameState() == GAME_STATE_MAINTAIN)
 	{
-		disconnectClient("Gameworld is under maintenance. Please re-connect in a while.");
+		disconnectClient("O servidor está em manuntenção. Por favor, tente novamente mais tarde.");
 		return;
 	}
 
@@ -572,7 +572,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 		}
 
 		std::ostringstream ss;
-		ss << "Your IP has been banned until " << formatDateShort(banInfo.expiresAt) << " by " << banInfo.bannedBy << ".\n\nReason specified:\n"
+		ss << "O seu IP está banido até " << formatDateShort(banInfo.expiresAt) << ".\n\nMotivo:\n"
 		   << banInfo.reason;
 		disconnectClient(ss.str());
 		return;
@@ -581,7 +581,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	uint32_t accountId = IOLoginData::gameworldAuthentication(accountName, password, characterName, version < 1200);
 	if (accountId == 0)
 	{
-		disconnectClient("Account name or password is not correct.");
+		disconnectClient("O nome da conta ou a senha estão incorretos.");
 		return;
 	}
 
@@ -656,7 +656,20 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 
 	// Modules system
 	if(recvbyte != 0xD3){
-		g_dispatcher.addTask(createTask(std::bind(&Modules::executeOnRecvbyte, g_modules, player, msg, recvbyte)));
+		g_dispatcher.addTask(createTask(std::bind(&Modules::executeOnRecvbyte, g_modules, player->getID(), msg, recvbyte)));
+	}
+
+	g_dispatcher.addTask(createTask(std::bind(&ProtocolGame::parsePacketFromDispatcher, getThis(), msg, recvbyte)));
+}
+
+void ProtocolGame::parsePacketFromDispatcher(NetworkMessage msg, uint8_t recvbyte)
+{
+	if (!acceptPackets || g_game.getGameState() == GAME_STATE_SHUTDOWN) {
+		return;
+	}
+
+	if (!player || player->isRemoved() || player->getHealth() <= 0) {
+		return;
 	}
 
 	switch (recvbyte) {
@@ -738,7 +751,7 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0xCD: parseInspectionObject(msg); break;
 		case 0xD2: addGameTask(&Game::playerRequestOutfit, player->getID()); break;
 		//g_dispatcher.addTask(createTask(std::bind(&Modules::executeOnRecvbyte, g_modules, player, msg, recvbyte)));
-		case 0xD3: g_dispatcher.addTask(createTask(std::bind(&ProtocolGame::parseSetOutfit, this, msg))); break;
+                case 0xD3: g_dispatcher.addTask(createTask(std::bind(&ProtocolGame::parseSetOutfit, getThis(), msg))); break;
 		case 0xD4: parseToggleMount(msg); break;
 		case 0xD5: parseApplyImbuement(msg); break;
 		case 0xD6: parseClearingImbuement(msg); break;
@@ -794,8 +807,7 @@ void ProtocolGame::parseHotkeyEquip(NetworkMessage &msg)
 		return;
 	}
 	uint16_t spriteid = msg.get<uint16_t>();
-	addGameTask(&Game::onPressHotkeyEquip, player, spriteid);
-	return;
+        addGameTask(&Game::onPressHotkeyEquip, player->getID(), spriteid);
 }
 
 void ProtocolGame::GetTileDescription(const Tile *tile, NetworkMessage &msg)
@@ -1133,6 +1145,10 @@ void ProtocolGame::parseAutoWalk(NetworkMessage &msg)
 
 void ProtocolGame::parseSetOutfit(NetworkMessage &msg)
 {
+	if (!player || player->isRemoved()) {
+		return;
+	}
+
 	uint16_t startBufferPosition = msg.getBufferPosition();
 	if (version >= 1200) {
 		Module *outfitModule = g_modules->getEventByRecvbyte(0xD3, false);
@@ -2916,7 +2932,8 @@ void ProtocolGame::sendCyclopediaCharacterGeneralStats()
 	msg.addByte(player->getSoul());
 	msg.add<uint16_t>(player->getStaminaMinutes());
 
-	Condition *condition = player->getCondition(CONDITION_REGENERATION);
+
+	Condition *condition = player->getCondition(CONDITION_REGENERATION, CONDITIONID_DEFAULT);
 	msg.add<uint16_t>(condition ? condition->getTicks() / 1000 : 0x00);
 	msg.add<uint16_t>(player->getOfflineTrainingTime() / 60 / 1000);
 	msg.add<uint16_t>(player->getSpeed() / 2);
@@ -3425,13 +3442,8 @@ void ProtocolGame::sendBasicData()
 	msg.addByte(player->getVocation()->getClientId());
 
 	// Prey window
-	if (player->getVocation()->getId() == 0)
-	{
-		msg.addByte(0);
-	}
-	else
-	{
-		msg.addByte(1); // has reached Main (allow player to open Prey window)
+	if (player->getVocation()->getId() >= 0)
+		msg.addByte(0); // has reached Main (allow player to open Prey window)
 	}
 
 	std::list<uint16_t> spellsList = g_spells->getSpellsByVocation(player->getVocationId());
@@ -4106,19 +4118,23 @@ void ProtocolGame::sendCoinBalance()
 
 void ProtocolGame::updateCoinBalance()
 {
+	if (!player) {
+		return;
+	}
+
 	g_dispatcher.addTask(
-		createTask(std::bind([](ProtocolGame *client) {
-			if (client && client->player)
-			{
+           createTask(std::bind([](uint32_t playerId) {
+			Player* threadPlayer = g_game.getPlayerByID(playerId);
+			if (threadPlayer) {
 				account::Account account;
-				account.LoadAccountDB(client->player->getAccount());
+				account.LoadAccountDB(threadPlayer->getAccount());
 				uint32_t coins;
 				account.GetCoins(&coins);
-				client->player->coinBalance = coins;
-				client->sendCoinBalance();
+				threadPlayer->coinBalance = coins;
+				threadPlayer->sendCoinBalance();
 			}
 		},
-							 this)));
+							player->getID())));
 }
 
 void ProtocolGame::sendMarketLeave()
@@ -6404,7 +6420,7 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 	msg.add<uint16_t>(player->getGrindingXpBoost()); // low level bonus
 	msg.add<uint16_t>(player->getStoreXpBoost()); // xp boost
 	msg.add<uint16_t>(player->getStaminaXpBoost()); // stamina multiplier (100 = 1.0x)
-
+ 
         if (player->getMana() > 65535) {
             msg.add<uint16_t>(std::min<int32_t>(player->getMana() * 100 / player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
             msg.add<uint16_t>(100);
@@ -6427,7 +6443,7 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 
 	msg.add<uint16_t>(player->getBaseSpeed() / 2);
 
-	Condition* condition = player->getCondition(CONDITION_REGENERATION);
+        Condition *condition = player->getCondition(CONDITION_REGENERATION, CONDITIONID_DEFAULT);
 	msg.add<uint16_t>(condition ? condition->getTicks() / 1000 : 0x00);
 
 	msg.add<uint16_t>(player->getOfflineTrainingTime() / 60 / 1000);
@@ -6453,7 +6469,7 @@ void ProtocolGame::AddPlayerSkills(NetworkMessage &msg)
 		msg.add<uint16_t>(player->getMagicLevelPercent() * 100);
 	}
 
-	for (uint8_t i = SKILL_FIRST; i <= SKILL_FISHING; ++i) {
+	for (uint8_t i <= SKILL_FISHING; ++i) {
 		msg.add<uint16_t>(std::min<int32_t>(player->getSkillLevel(i), std::numeric_limits<uint16_t>::max()));
 		msg.add<uint16_t>(player->getBaseSkill(i));
 		if (version >= 1200) {
@@ -6926,7 +6942,7 @@ void ProtocolGame::reloadCreature(const Creature *creature)
 void ProtocolGame::sendOpenStash()
 {
 	if (version < 1200) {
-		player->sendCancelMessage("Stash only works on the client 12.");
+		player->sendCancelMessage("É necessário estar conectado na versão 12 para utilizar o Stash.");
 		return;
 	}
 	NetworkMessage msg;
@@ -6944,7 +6960,7 @@ void ProtocolGame::sendOpenStash()
 void ProtocolGame::parseStashWithdraw(NetworkMessage &msg)
 {
 	if (player->isStashExhausted()) {
-		player->sendCancelMessage("You need to wait to do this again.");
+		player->sendCancelMessage("Você precisa esperar para fazer isso novamente.");
 		return;
 	}
 
@@ -6955,28 +6971,28 @@ void ProtocolGame::parseStashWithdraw(NetworkMessage &msg)
 			uint16_t spriteId = msg.get<uint16_t>();
 			uint8_t stackpos = msg.getByte();
 			uint32_t count = msg.getByte();
-			addGameTask(&Game::playerStowItem, player, pos, spriteId, stackpos, count, false);
+			addGameTask(&Game::playerStowItem, player->getID(), pos, spriteId, stackpos, count, false);
 			break;
 		}
 		case SUPPLY_STASH_ACTION_STOW_CONTAINER: {
 			Position pos = msg.getPosition();
 			uint16_t spriteId = msg.get<uint16_t>();
 			uint8_t stackpos = msg.getByte();
-			addGameTask(&Game::playerStowItem, player, pos, spriteId, stackpos, 0, false);
+                        addGameTask(&Game::playerStowItem, player->getID(), pos, spriteId, stackpos, 0, false);
 			break;
 		}
 		case SUPPLY_STASH_ACTION_STOW_STACK: {
 			Position pos = msg.getPosition();
 			uint16_t spriteId = msg.get<uint16_t>();
 			uint8_t stackpos = msg.getByte();
-			addGameTask(&Game::playerStowItem, player, pos, spriteId, stackpos, 0, true);
+			addGameTask(&Game::playerStowItem, player->getID(), pos, spriteId, stackpos, 0, true);
 			break;
 		}
 		case SUPPLY_STASH_ACTION_WITHDRAW: {
 			uint16_t spriteId = msg.get<uint16_t>();
 			uint32_t count = msg.get<uint32_t>();
 			uint8_t stackpos = msg.getByte();
-			addGameTask(&Game::playerStashWithdraw, player, spriteId, count, stackpos);
+			addGameTask(&Game::playerStashWithdraw, player->getID(), spriteId, count, stackpos);
 			break;
 		}
 		default:

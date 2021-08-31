@@ -293,7 +293,7 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 				}
 				else
 				{
-					ss << "A sua conta está banida permanentemente.\nMotivo:\n"
+					ss << "A sua conta está banida permanentemente.\n\nMotivo:\n"
 					   << banInfo.reason;
 				}
 				disconnectClient(ss.str());
@@ -456,7 +456,7 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 	}
 
 	if (player->getProtocolVersion() >= 1264) {
-		sendSessionEndInformation(forced ? SESSION_END_FORCECLOSE : SESSION_END_LOGOUT);
+		sendSessionEndInformation(SESSION_END_LOGOUT2);
 	} else {
 		disconnect();
 	}
@@ -543,10 +543,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	if (clientVersion != g_config.getNumber(ConfigManager::CLIENT_VERSION) && (allowClientOld && version != 1100))
 	{
 		std::ostringstream ss;
-		ss << "Apenas a versão " << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
+		ss << "Apenas a versão" << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
 		if (allowClientOld)
 			ss << " e 10.00";
-			ss << " são permitidos.";
+			ss << " são permitidos!";
 			disconnectClient(ss.str());
 		return;
 	}
@@ -751,7 +751,7 @@ void ProtocolGame::parsePacketFromDispatcher(NetworkMessage msg, uint8_t recvbyt
 		case 0xCD: parseInspectionObject(msg); break;
 		case 0xD2: addGameTask(&Game::playerRequestOutfit, player->getID()); break;
 		//g_dispatcher.addTask(createTask(std::bind(&Modules::executeOnRecvbyte, g_modules, player, msg, recvbyte)));
-                case 0xD3: g_dispatcher.addTask(createTask(std::bind(&ProtocolGame::parseSetOutfit, getThis(), msg))); break;
+		case 0xD3: g_dispatcher.addTask(createTask(std::bind(&ProtocolGame::parseSetOutfit, getThis(), msg))); break;
 		case 0xD4: parseToggleMount(msg); break;
 		case 0xD5: parseApplyImbuement(msg); break;
 		case 0xD6: parseClearingImbuement(msg); break;
@@ -807,7 +807,7 @@ void ProtocolGame::parseHotkeyEquip(NetworkMessage &msg)
 		return;
 	}
 	uint16_t spriteid = msg.get<uint16_t>();
-        addGameTask(&Game::onPressHotkeyEquip, player->getID(), spriteid);
+	addGameTask(&Game::onPressHotkeyEquip, player->getID(), spriteid);
 }
 
 void ProtocolGame::GetTileDescription(const Tile *tile, NetworkMessage &msg)
@@ -2546,7 +2546,6 @@ void ProtocolGame::parseMarketBrowse(NetworkMessage &msg)
 	}
 	else
 	{
-	player->sendMarketEnter(player->getLastDepotId());
 		addGameTask(&Game::playerBrowseMarket, player->getID(), browseId);
 	}
 	if (version >= 1200){
@@ -2931,7 +2930,6 @@ void ProtocolGame::sendCyclopediaCharacterGeneralStats()
 	msg.add<uint16_t>(std::min<int32_t>(player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
 	msg.addByte(player->getSoul());
 	msg.add<uint16_t>(player->getStaminaMinutes());
-
 
 	Condition *condition = player->getCondition(CONDITION_REGENERATION, CONDITIONID_DEFAULT);
 	msg.add<uint16_t>(condition ? condition->getTicks() / 1000 : 0x00);
@@ -3443,7 +3441,8 @@ void ProtocolGame::sendBasicData()
 
 	// Prey window
 	if (player->getVocation()->getId() >= 0)
-		msg.addByte(0); // has reached Main (allow player to open Prey window)
+	{
+		msg.addByte(0);
 	}
 
 	std::list<uint16_t> spellsList = g_spells->getSpellsByVocation(player->getVocationId());
@@ -4123,7 +4122,7 @@ void ProtocolGame::updateCoinBalance()
 	}
 
 	g_dispatcher.addTask(
-           createTask(std::bind([](uint32_t playerId) {
+		createTask(std::bind([](uint32_t playerId) {
 			Player* threadPlayer = g_game.getPlayerByID(playerId);
 			if (threadPlayer) {
 				account::Account account;
@@ -4134,7 +4133,7 @@ void ProtocolGame::updateCoinBalance()
 				threadPlayer->sendCoinBalance();
 			}
 		},
-							player->getID())));
+		player->getID())));
 }
 
 void ProtocolGame::sendMarketLeave()
@@ -6420,7 +6419,7 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 	msg.add<uint16_t>(player->getGrindingXpBoost()); // low level bonus
 	msg.add<uint16_t>(player->getStoreXpBoost()); // xp boost
 	msg.add<uint16_t>(player->getStaminaXpBoost()); // stamina multiplier (100 = 1.0x)
- 
+
         if (player->getMana() > 65535) {
             msg.add<uint16_t>(std::min<int32_t>(player->getMana() * 100 / player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
             msg.add<uint16_t>(100);
@@ -6443,7 +6442,7 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 
 	msg.add<uint16_t>(player->getBaseSpeed() / 2);
 
-        Condition *condition = player->getCondition(CONDITION_REGENERATION, CONDITIONID_DEFAULT);
+	Condition *condition = player->getCondition(CONDITION_REGENERATION, CONDITIONID_DEFAULT);
 	msg.add<uint16_t>(condition ? condition->getTicks() / 1000 : 0x00);
 
 	msg.add<uint16_t>(player->getOfflineTrainingTime() / 60 / 1000);
@@ -6469,7 +6468,7 @@ void ProtocolGame::AddPlayerSkills(NetworkMessage &msg)
 		msg.add<uint16_t>(player->getMagicLevelPercent() * 100);
 	}
 
-	for (uint8_t i <= SKILL_FISHING; ++i) {
+	for (uint8_t i = SKILL_FIRST; i <= SKILL_FISHING; ++i) {
 		msg.add<uint16_t>(std::min<int32_t>(player->getSkillLevel(i), std::numeric_limits<uint16_t>::max()));
 		msg.add<uint16_t>(player->getBaseSkill(i));
 		if (version >= 1200) {
@@ -6959,6 +6958,11 @@ void ProtocolGame::sendOpenStash()
 
 void ProtocolGame::parseStashWithdraw(NetworkMessage &msg)
 {
+	if (!player->isSupplyStashMenuAvailable()) {
+		player->sendCancelMessage("You can't use supply stash right now.");
+		return;
+	}
+
 	if (player->isStashExhausted()) {
 		player->sendCancelMessage("Você precisa esperar para fazer isso novamente.");
 		return;
@@ -6978,7 +6982,7 @@ void ProtocolGame::parseStashWithdraw(NetworkMessage &msg)
 			Position pos = msg.getPosition();
 			uint16_t spriteId = msg.get<uint16_t>();
 			uint8_t stackpos = msg.getByte();
-                        addGameTask(&Game::playerStowItem, player->getID(), pos, spriteId, stackpos, 0, false);
+			addGameTask(&Game::playerStowItem, player->getID(), pos, spriteId, stackpos, 0, false);
 			break;
 		}
 		case SUPPLY_STASH_ACTION_STOW_STACK: {

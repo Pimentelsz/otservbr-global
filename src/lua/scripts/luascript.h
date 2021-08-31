@@ -1728,6 +1728,7 @@ class LuaScriptInterface
 		static int luaMountGetClientId(lua_State* L);
 		static int luaMountGetSpeed(lua_State* L);
 		static int webhookSend(lua_State* L);
+		static int webhookSpecialSend(lua_State* L);
 
 		//
 		std::string lastLuaError;

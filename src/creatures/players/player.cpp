@@ -303,13 +303,13 @@ int32_t Player::getWeaponSkill(const Item* item) const
 			break;
 		}
 
-		case WEAPON_AXE: {
-			attackSkill = getSkillLevel(SKILL_AXE);
+		case WEAPON_FIST: {
+			attackSkill = getSkillLevel(SKILL_FIST);
 			break;
 		}
 
-		case WEAPON_FIST: {
-			attackSkill = getSkillLevel(SKILL_FIST);
+		case WEAPON_AXE: {
+			attackSkill = getSkillLevel(SKILL_AXE);
 			break;
 		}
 
@@ -1409,6 +1409,7 @@ void Player::onChangeZone(ZoneType_t zone)
 
 	g_game.updateCreatureWalkthrough(this);
 	sendIcons();
+	g_events->eventPlayerOnChangeZone(this, zone);
 }
 
 void Player::onAttackedCreatureChangeZone(ZoneType_t zone)
@@ -2016,7 +2017,7 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 		g_creatureEvents->playerAdvance(this, SKILL_LEVEL, prevLevel, level);
 
 		std::ostringstream ss;
-		ss << "You advanced from Level " << prevLevel << " to Level " << level << '.';
+		ss << "Você avançou do nível " << prevLevel << " para o nível " << level << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 	}
 

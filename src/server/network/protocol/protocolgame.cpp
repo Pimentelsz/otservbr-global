@@ -388,7 +388,7 @@ void ProtocolGame::connect(uint32_t playerId, OperatingSystem_t operatingSystem)
 	Player *foundPlayer = g_game.getPlayerByID(playerId);
 	if (!foundPlayer || foundPlayer->client)
 	{
-		disconnectClient(""Existe um personagem desta conta logada no servidor.\nDeslogue o personagem e tente novamente.");
+		disconnectClient("Existe um personagem desta conta logada no servidor.\nDeslogue o personagem e tente novamente.");
 		return;
 	}
 

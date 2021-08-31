@@ -53,7 +53,7 @@ CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 			if (params.valueCallback) {
 				params.valueCallback->getMinMaxValues(player, damage, params.useCharges);
 			} else if (formulaType == COMBAT_FORMULA_LEVELMAGIC) {
-				int32_t levelFormula = player->getLevel() * 2 + player->getMagicLevel() * 3;
+				int32_t levelFormula = player->getLevel() * 2 + player->getMagicLevel() * 4;
 				damage.primary.value = normal_random(
 					static_cast<int32_t>(levelFormula * mina + minb),
 					static_cast<int32_t>(levelFormula * maxa + maxb)
@@ -63,7 +63,7 @@ CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 				const Weapon* weapon = g_weapons->getWeapon(tool);
 				if (weapon) {
 					damage.primary.value = normal_random(
-						static_cast<int32_t>(minb),
+							static_cast<int32_t>(minb),
 						static_cast<int32_t>(weapon->getWeaponDamage(player, target, tool, true) * maxa + maxb)
 					);
 
@@ -705,15 +705,15 @@ void Combat::addDistanceEffect(Creature* caster, const Position& fromPos, const 
 			case WEAPON_AXE:
 				effect = CONST_ANI_WHIRLWINDAXE;
 				break;
-                        case WEAPON_FIST:
-                                effect = CONST_ANI_LARGEROCK;
-                                break;
 			case WEAPON_SWORD:
 				effect = CONST_ANI_WHIRLWINDSWORD;
 				break;
 			case WEAPON_CLUB:
 				effect = CONST_ANI_WHIRLWINDCLUB;
 				break;
+            case WEAPON_FIST:
+                effect = CONST_ANI_LARGEROCK;
+                break;
 			default:
 				effect = CONST_ANI_NONE;
 				break;

@@ -3962,7 +3962,7 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 
 	Container* tradeContainer = tradeItem->getContainer();
 	if (tradeContainer && tradeContainer->getItemHoldingCount() + 1 > 100) {
-		player->sendTextMessage(MESSAGE_TRADE, "You can not trade more than 100 items.");
+		player->sendTextMessage(MESSAGE_TRADE, "Você não pode negociar mais do que 100 items.");
 		return;
 	}
 
@@ -3993,7 +3993,7 @@ bool Game::internalStartTrade(Player* player, Player* tradePartner, Item* tradeI
 
 	if (tradePartner->tradeState == TRADE_NONE) {
 		std::ostringstream ss;
-		ss << player->getName() << " wants to trade with you.";
+		ss << player->getName() << " quer negociar com você.";
 		tradePartner->sendTextMessage(MESSAGE_TRANSACTION, ss.str());
 		tradePartner->tradeState = TRADE_ACKNOWLEDGE;
 		tradePartner->tradePartner = player;
@@ -4112,30 +4112,30 @@ std::string Game::getTradeErrorDescription(ReturnValue ret, Item* item)
 	if (item) {
 		if (ret == RETURNVALUE_NOTENOUGHCAPACITY) {
 			std::ostringstream ss;
-			ss << "You do not have enough capacity to carry";
+			ss << "Você não tem capacidade suficiente para carregar";
 
 			if (item->isStackable() && item->getItemCount() > 1) {
-				ss << " these objects.";
+				ss << " esses objetos.";
 			} else {
-				ss << " this object.";
+				ss << " esse objeto.";
 			}
 
 			ss << std::endl << ' ' << item->getWeightDescription();
 			return ss.str();
 		} else if (ret == RETURNVALUE_NOTENOUGHROOM || ret == RETURNVALUE_CONTAINERNOTENOUGHROOM) {
 			std::ostringstream ss;
-			ss << "You do not have enough room to carry";
+			ss << "Você não tem espaço suficiente para carregar";
 
 			if (item->isStackable() && item->getItemCount() > 1) {
-				ss << " these objects.";
+				ss << " esses objetos.";
 			} else {
-				ss << " this object.";
+				ss << " esse objeto.";
 			}
 
 			return ss.str();
 		}
 	}
-	return "Trade could not be completed.";
+	return "A negociação não pôde ser concluída.";
 }
 
 void Game::playerLookInTrade(uint32_t playerId, bool lookAtCounterOffer, uint8_t index)
@@ -4225,7 +4225,7 @@ void Game::internalCloseTrade(Player* player)
 	player->setTradeState(TRADE_NONE);
 	player->tradePartner = nullptr;
 
-	player->sendTextMessage(MESSAGE_FAILURE, "Trade cancelled.");
+	player->sendTextMessage(MESSAGE_FAILURE, "Negociação cancelada.");
 	player->sendTradeClose();
 
 	if (tradePartner) {
@@ -4243,7 +4243,7 @@ void Game::internalCloseTrade(Player* player)
 		tradePartner->setTradeState(TRADE_NONE);
 		tradePartner->tradePartner = nullptr;
 
-		tradePartner->sendTextMessage(MESSAGE_FAILURE, "Trade cancelled.");
+		tradePartner->sendTextMessage(MESSAGE_FAILURE, "Negociação cancelada.");
 		tradePartner->sendTradeClose();
 	}
 }
@@ -4775,19 +4775,19 @@ void Game::playerRequestAddVip(uint32_t playerId, const std::string& name)
 		bool specialVip;
 		std::string formattedName = name;
 		if (!IOLoginData::getGuidByNameEx(guid, specialVip, formattedName)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "A player with this name does not exist.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Não existe um jogador com este nome.");
 			return;
 		}
 
 		if (specialVip && !player->hasFlag(PlayerFlag_SpecialVIP)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "You can not add this player.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Você não pode adicionar este jogador.");
 			return;
 		}
 
 		player->addVIP(guid, formattedName, VIPSTATUS_OFFLINE);
 	} else {
 		if (vipPlayer->hasFlag(PlayerFlag_SpecialVIP) && !player->hasFlag(PlayerFlag_SpecialVIP)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "You can not add this player.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Você não pode adicionar este jogador.");
 			return;
 		}
 
@@ -5006,7 +5006,7 @@ void Game::playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type,
 	uint32_t muteTime = player->isMuted();
 	if (muteTime > 0) {
 		std::ostringstream ss;
-		ss << "You are still muted for " << muteTime << " seconds.";
+		ss << "Você está silenciado por " << muteTime << " segundos.";
 		player->sendTextMessage(MESSAGE_FAILURE, ss.str());
 		return;
 	}
@@ -5136,7 +5136,7 @@ bool Game::playerSpeakTo(Player* player, SpeakClasses type, const std::string& r
 {
 	Player* toPlayer = getPlayerByName(receiver);
 	if (!toPlayer) {
-		player->sendTextMessage(MESSAGE_FAILURE, "A player with this name is not online.");
+		player->sendTextMessage(MESSAGE_FAILURE, "O jogador com este nome não está online.");
 		return false;
 	}
 
@@ -5150,7 +5150,7 @@ bool Game::playerSpeakTo(Player* player, SpeakClasses type, const std::string& r
 	toPlayer->onCreatureSay(player, type, text);
 
 	if (toPlayer->isInGhostMode() && !player->isAccessPlayer()) {
-		player->sendTextMessage(MESSAGE_FAILURE, "A player with this name is not online.");
+		player->sendTextMessage(MESSAGE_FAILURE, "O jogador com este nome não está online.");
 	} else {
 		std::ostringstream ss;
 		ss << "Message sent to " << toPlayer->getName() << '.';
@@ -6673,9 +6673,9 @@ bool Game::gameIsDay()
 
 void Game::shutdown()
 {
-  webhook_send_message("Server is shutting down", "Shutting down...", WEBHOOK_COLOR_OFFLINE);
+  webhook_send_message("O servidor está sendo reiniciado", "Reiniciando...", WEBHOOK_COLOR_OFFLINE);
 
-	SPDLOG_INFO("Shutting down...");
+	SPDLOG_INFO("Reiniciando...");
 
 	g_scheduler.shutdown();
 	g_databaseTasks.shutdown();
@@ -6691,7 +6691,7 @@ void Game::shutdown()
 
 	ConnectionManager::getInstance().closeAll();
 
-	SPDLOG_INFO("Done!");
+	SPDLOG_INFO("Reiniciado!");
 }
 
 void Game::cleanup()
@@ -7074,7 +7074,7 @@ void Game::sendGuildMotd(uint32_t playerId)
 
 	Guild* guild = player->getGuild();
 	if (guild) {
-		player->sendChannelMessage("Message of the Day", guild->getMotd(), TALKTYPE_CHANNEL_R1, CHANNEL_GUILD);
+		player->sendChannelMessage("Mensagem do Dia:", guild->getMotd(), TALKTYPE_CHANNEL_R1, CHANNEL_GUILD);
 	}
 }
 

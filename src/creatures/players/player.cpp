@@ -518,7 +518,7 @@ void Player::addSkillAdvance(skills_t skill, uint64_t count)
 		skills[skill].percent = 0;
 
 		std::ostringstream ss;
-		ss << "You advanced to " << getSkillName(skill) << " level " << skills[skill].level << '.';
+		ss << "Você avançou o nível de " << getSkillName(skill) << " para " << skills[skill].level << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 
 		g_creatureEvents->playerAdvance(this, skill, (skills[skill].level - 1), skills[skill].level);
@@ -844,7 +844,7 @@ bool Player::canWalkthroughEx(const Creature* creature) const
 void Player::onReceiveMail() const
 {
 	if (isNearDepotBox()) {
-		sendTextMessage(MESSAGE_EVENT_ADVANCE, "New mail has arrived.");
+		sendTextMessage(MESSAGE_EVENT_ADVANCE, "Você recebeu uma nova correspondência em sua inbox.");
 	}
 }
 
@@ -1374,7 +1374,7 @@ void Player::onAttackedCreatureDisappear(bool isLogout)
 	sendCancelTarget();
 
 	if (!isLogout) {
-		sendTextMessage(MESSAGE_FAILURE, "Target lost.");
+		sendTextMessage(MESSAGE_FAILURE, "Alvo perdido.");
 	}
 }
 
@@ -1383,7 +1383,7 @@ void Player::onFollowCreatureDisappear(bool isLogout)
 	sendCancelTarget();
 
 	if (!isLogout) {
-		sendTextMessage(MESSAGE_FAILURE, "Target lost.");
+		sendTextMessage(MESSAGE_FAILURE, "Alvo perdido.");
 	}
 }
 
@@ -1903,7 +1903,7 @@ void Player::addManaSpent(uint64_t amount)
 		manaSpent = 0;
 
 		std::ostringstream ss;
-		ss << "You advanced to magic level " << magLevel << '.';
+		ss << "Você avançou o nível de magic level para " << magLevel << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 
 		g_creatureEvents->playerAdvance(this, SKILL_MAGLEVEL, magLevel - 1, magLevel);
@@ -2558,9 +2558,9 @@ void Player::notifyStatusChange(Player* loginPlayer, VipStatus_t status, bool me
 
 	if (message) {
 		if (status == VIPSTATUS_ONLINE) {
-			client->sendTextMessage(TextMessage(MESSAGE_FAILURE, loginPlayer->getName() + " has logged in."));
+			client->sendTextMessage(TextMessage(MESSAGE_FAILURE, loginPlayer->getName() + " conectou."));
 		} else if (status == VIPSTATUS_OFFLINE) {
-			client->sendTextMessage(TextMessage(MESSAGE_FAILURE, loginPlayer->getName() + " has logged out."));
+			client->sendTextMessage(TextMessage(MESSAGE_FAILURE, loginPlayer->getName() + " desconectou."));
 		}
 	}
 }
@@ -3281,7 +3281,7 @@ void Player::stashContainer(StashContainerList itemDict)
 	}
 
 	if (getStashSize(stashItemDict) > g_config.getNumber(ConfigManager::STASH_ITEMS)) {
-		sendCancelMessage("You don't have capacity in the Supply Stash to stow all this item.");
+		sendCancelMessage("Você não tem capacidade no Stash para guardar todos estes items.");
 		return;
 	}
 
@@ -3300,7 +3300,7 @@ void Player::stashContainer(StashContainerList itemDict)
 		return;
 	}
 
-	retString << "Stowed " << totalStowed << " object" << (totalStowed > 1 ? "s." : ".");
+	retString << "Você guardou " << totalStowed << " objeto" << (totalStowed > 1 ? "s." : ".");
 	sendTextMessage(MESSAGE_STATUS, retString.str());
 }
 
@@ -3847,19 +3847,19 @@ void Player::onAddCombatCondition(ConditionType_t type)
 {
 	switch (type) {
 		case CONDITION_POISON:
-			sendTextMessage(MESSAGE_FAILURE, "You are poisoned.");
+			sendTextMessage(MESSAGE_FAILURE, "Voce está envenenado.");
 			break;
 
 		case CONDITION_DROWN:
-			sendTextMessage(MESSAGE_FAILURE, "You are drowning.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está se afogando.");
 			break;
 
 		case CONDITION_PARALYZE:
-			sendTextMessage(MESSAGE_FAILURE, "You are paralyzed.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está paralisado.");
 			break;
 
 		case CONDITION_DRUNK:
-			sendTextMessage(MESSAGE_FAILURE, "You are drunk.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está bêbado.");
 			break;
 
 		case CONDITION_ROOTED:
@@ -3867,11 +3867,11 @@ void Player::onAddCombatCondition(ConditionType_t type)
 			break;
 
 		case CONDITION_CURSED:
-			sendTextMessage(MESSAGE_FAILURE, "You are cursed.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está amaldiçoado.");
 			break;
 
 		case CONDITION_FREEZING:
-			sendTextMessage(MESSAGE_FAILURE, "You are freezing.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está congelando.");
 			break;
 
 		case CONDITION_DAZZLED:
@@ -3879,7 +3879,7 @@ void Player::onAddCombatCondition(ConditionType_t type)
 			break;
 
 		case CONDITION_BLEEDING:
-			sendTextMessage(MESSAGE_FAILURE, "You are bleeding.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está sangrando.");
 			break;
 
 		default:
@@ -5012,7 +5012,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 
 		if (magLevel != currMagLevel) {
 			std::ostringstream ss;
-			ss << "You advanced to magic level " << magLevel << '.';
+			ss << "Você avançou o nível de magic level para " << magLevel << '.';
 			sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 		}
 
@@ -5067,7 +5067,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 
 		if (currSkillLevel != skills[skill].level) {
 			std::ostringstream ss;
-			ss << "You advanced to " << getSkillName(skill) << " level " << skills[skill].level << '.';
+			ss << "Você avançou o nível de " << getSkillName(skill) << " para " << skills[skill].level << '.';
 			sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 		}
 

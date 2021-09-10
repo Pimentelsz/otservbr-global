@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The Forgotten Server - a free and open-source MMORPG server emulator
  * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
  *
@@ -253,13 +253,13 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 
 		if (g_game.getGameState() == GAME_STATE_CLOSING && !player->hasFlag(PlayerFlag_CanAlwaysLogin))
 		{
-			disconnectClient("O servidor está reiniciado.\nPor favor, tente novamente mais tarde.");
+			disconnectClient("O servidor está sendo reiniciado.\nPor favor, tente novamente mais tarde.");
 			return;
 		}
 
 		if (g_game.getGameState() == GAME_STATE_CLOSED && !player->hasFlag(PlayerFlag_CanAlwaysLogin))
 		{
-			disconnectClient("O servidor está manuntenção.\nPor favor, tente novamente mais tarde.");
+			disconnectClient("O servidor está em manuntenção.\nPor favor, tente novamente mais tarde.");
 			return;
 		}
 
@@ -510,7 +510,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	size_t pos = sessionKey.find('\n');
 	if (pos == std::string::npos)
 	{
-		disconnectClient("Você precisa informar o nome da sua conta.");
+		disconnectClient("You must enter your account name.");
 		return;
 	}
 
@@ -524,7 +524,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	std::string accountName = sessionKey.substr(0, pos);
 	if (accountName.empty())
 	{
-		disconnectClient("Você precisa informar o nome da sua conta.");
+		disconnectClient("You must enter your account name.");
 		return;
 	}
 
@@ -543,7 +543,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	if (clientVersion != g_config.getNumber(ConfigManager::CLIENT_VERSION) && (allowClientOld && version != 1100))
 	{
 		std::ostringstream ss;
-		ss << "Apenas a versão" << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
+		ss << "Apenas a versão " << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
 		if (allowClientOld)
 			ss << " e 10.00";
 			ss << " são permitidos!";
@@ -581,7 +581,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	uint32_t accountId = IOLoginData::gameworldAuthentication(accountName, password, characterName, version < 1200);
 	if (accountId == 0)
 	{
-		disconnectClient("O nome da conta ou a senha estão incorretos.");
+		disconnectClient("Account name or password is not correct.");
 		return;
 	}
 
@@ -1878,11 +1878,35 @@ void ProtocolGame::parseBestiarysendMonsterData(NetworkMessage &msg)
 	newmsg.addByte(lootList.size());
 	for (LootBlock loot : lootList)
 	{
-		newmsg.addItemId(currentLevel > 1 ? loot.id : 0);
 		int8_t difficult = g_bestiary.calculateDifficult(loot.chance);
+		bool shouldAddItem = false;
+
+		switch (currentLevel)
+		{
+			case 1:
+				shouldAddItem = false;
+			break;
+			case 2:
+				if (difficult < 2)
+				{
+					shouldAddItem = true;
+				}
+				break;
+			case 3:
+				if (difficult < 3)
+				{
+					shouldAddItem = true;
+				}
+				break;
+			case 4:
+				shouldAddItem = true;
+				break;
+		}
+
+		newmsg.addItemId(shouldAddItem == true ? loot.id : 0);
 		newmsg.addByte(difficult);
 		newmsg.addByte(0); // 1 if special event - 0 if regular loot (?)
-		if (currentLevel > 1)
+		if (shouldAddItem == true)
 		{
 			newmsg.addString(loot.name);
 			newmsg.addByte(loot.countmax > 0 ? 0x1 : 0x0);
@@ -3443,6 +3467,10 @@ void ProtocolGame::sendBasicData()
 	if (player->getVocation()->getId() >= 0)
 	{
 		msg.addByte(0);
+	}
+	else
+	{
+		msg.addByte(1); // has reached Main (allow player to open Prey window)
 	}
 
 	std::list<uint16_t> spellsList = g_spells->getSpellsByVocation(player->getVocationId());
@@ -6392,16 +6420,15 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 {
 	msg.addByte(0xA0);
 
-        if (player->getHealth() > 65535) {
-            msg.add<uint16_t>(std::min<int32_t>(player->getHealth() * 100 / player->getMaxHealth(), std::numeric_limits<uint16_t>::max()));
-            msg.add<uint16_t>(100);
-        }
-        else
-        {
+    if (player->getHealth() > 65535) {
+        msg.add<uint16_t>(std::min<int32_t>(player->getHealth() * 100 / player->getMaxHealth(), std::numeric_limits<uint16_t>::max()));
+        msg.add<uint16_t>(100);
+		}
+        else {
 	    msg.add<uint16_t>(std::min<int32_t>(player->getHealth(), std::numeric_limits<uint16_t>::max()));
 	    msg.add<uint16_t>(std::min<int32_t>(player->getMaxHealth(), std::numeric_limits<uint16_t>::max()));
-        }
-
+	}
+		
 	msg.add<uint32_t>(player->getFreeCapacity());
 	if (version < 1200) {
 		msg.add<uint32_t>(player->getCapacity());
@@ -6420,16 +6447,15 @@ void ProtocolGame::AddPlayerStats(NetworkMessage &msg)
 	msg.add<uint16_t>(player->getStoreXpBoost()); // xp boost
 	msg.add<uint16_t>(player->getStaminaXpBoost()); // stamina multiplier (100 = 1.0x)
 
-        if (player->getMana() > 65535) {
-            msg.add<uint16_t>(std::min<int32_t>(player->getMana() * 100 / player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
-            msg.add<uint16_t>(100);
-        }
-        else
-        {
+    if (player->getMana() > 65535) {
+        msg.add<uint16_t>(std::min<int32_t>(player->getMana() * 100 / player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
+        msg.add<uint16_t>(100); 
+		}
+        else {
 	    msg.add<uint16_t>(std::min<int32_t>(player->getMana(), std::numeric_limits<uint16_t>::max()));
 	    msg.add<uint16_t>(std::min<int32_t>(player->getMaxMana(), std::numeric_limits<uint16_t>::max()));
-        }
-
+	}
+		
 	if (version < 1200) {
 		msg.addByte(std::min<uint32_t>(player->getMagicLevel(), std::numeric_limits<uint8_t>::max()));
 		msg.addByte(std::min<uint32_t>(player->getBaseMagicLevel(), std::numeric_limits<uint8_t>::max()));
@@ -6941,7 +6967,7 @@ void ProtocolGame::reloadCreature(const Creature *creature)
 void ProtocolGame::sendOpenStash()
 {
 	if (version < 1200) {
-		player->sendCancelMessage("É necessário estar conectado na versão 12 para utilizar o Stash.");
+		player->sendCancelMessage("É necessário estar conectado na versão 12+ para utilizar o Stash.");
 		return;
 	}
 	NetworkMessage msg;
@@ -6959,7 +6985,7 @@ void ProtocolGame::sendOpenStash()
 void ProtocolGame::parseStashWithdraw(NetworkMessage &msg)
 {
 	if (!player->isSupplyStashMenuAvailable()) {
-		player->sendCancelMessage("You can't use supply stash right now.");
+		player->sendCancelMessage("Você não pode usar o Stash agora.");
 		return;
 	}
 

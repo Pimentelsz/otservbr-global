@@ -3962,7 +3962,7 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 
 	Container* tradeContainer = tradeItem->getContainer();
 	if (tradeContainer && tradeContainer->getItemHoldingCount() + 1 > 100) {
-		player->sendTextMessage(MESSAGE_TRADE, "Você não pode negociar mais do que 100 items.");
+		player->sendTextMessage(MESSAGE_TRADE, "You can not trade more than 100 items.");
 		return;
 	}
 
@@ -3993,7 +3993,7 @@ bool Game::internalStartTrade(Player* player, Player* tradePartner, Item* tradeI
 
 	if (tradePartner->tradeState == TRADE_NONE) {
 		std::ostringstream ss;
-		ss << player->getName() << " quer negociar com você.";
+		ss << player->getName() << " wants to trade with you.";
 		tradePartner->sendTextMessage(MESSAGE_TRANSACTION, ss.str());
 		tradePartner->tradeState = TRADE_ACKNOWLEDGE;
 		tradePartner->tradePartner = player;
@@ -4112,30 +4112,30 @@ std::string Game::getTradeErrorDescription(ReturnValue ret, Item* item)
 	if (item) {
 		if (ret == RETURNVALUE_NOTENOUGHCAPACITY) {
 			std::ostringstream ss;
-			ss << "Você não tem capacidade suficiente para carregar";
+			ss << "You do not have enough capacity to carry";
 
 			if (item->isStackable() && item->getItemCount() > 1) {
-				ss << " esses objetos.";
+				ss << " these objects.";
 			} else {
-				ss << " esse objeto.";
+				ss << " this object.";
 			}
 
 			ss << std::endl << ' ' << item->getWeightDescription();
 			return ss.str();
 		} else if (ret == RETURNVALUE_NOTENOUGHROOM || ret == RETURNVALUE_CONTAINERNOTENOUGHROOM) {
 			std::ostringstream ss;
-			ss << "Você não tem espaço suficiente para carregar";
+			ss << "You do not have enough room to carry";
 
 			if (item->isStackable() && item->getItemCount() > 1) {
-				ss << " esses objetos.";
+				ss << " these objects.";
 			} else {
-				ss << " esse objeto.";
+				ss << " this object.";
 			}
 
 			return ss.str();
 		}
 	}
-	return "A negociação não pôde ser concluída.";
+	return "Trade could not be completed.";
 }
 
 void Game::playerLookInTrade(uint32_t playerId, bool lookAtCounterOffer, uint8_t index)
@@ -4225,7 +4225,7 @@ void Game::internalCloseTrade(Player* player)
 	player->setTradeState(TRADE_NONE);
 	player->tradePartner = nullptr;
 
-	player->sendTextMessage(MESSAGE_FAILURE, "Negociação cancelada.");
+	player->sendTextMessage(MESSAGE_FAILURE, "Trade cancelled.");
 	player->sendTradeClose();
 
 	if (tradePartner) {
@@ -4243,7 +4243,7 @@ void Game::internalCloseTrade(Player* player)
 		tradePartner->setTradeState(TRADE_NONE);
 		tradePartner->tradePartner = nullptr;
 
-		tradePartner->sendTextMessage(MESSAGE_FAILURE, "Negociação cancelada.");
+		tradePartner->sendTextMessage(MESSAGE_FAILURE, "Trade cancelled.");
 		tradePartner->sendTradeClose();
 	}
 }
@@ -4775,7 +4775,7 @@ void Game::playerRequestAddVip(uint32_t playerId, const std::string& name)
 		bool specialVip;
 		std::string formattedName = name;
 		if (!IOLoginData::getGuidByNameEx(guid, specialVip, formattedName)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "Não existe um jogador com este nome.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Não existe nenhum jogador com este nome.");
 			return;
 		}
 
@@ -5136,7 +5136,7 @@ bool Game::playerSpeakTo(Player* player, SpeakClasses type, const std::string& r
 {
 	Player* toPlayer = getPlayerByName(receiver);
 	if (!toPlayer) {
-		player->sendTextMessage(MESSAGE_FAILURE, "O jogador com este nome não está online.");
+		player->sendTextMessage(MESSAGE_FAILURE, "Este jogador não está online.");
 		return false;
 	}
 
@@ -5150,10 +5150,10 @@ bool Game::playerSpeakTo(Player* player, SpeakClasses type, const std::string& r
 	toPlayer->onCreatureSay(player, type, text);
 
 	if (toPlayer->isInGhostMode() && !player->isAccessPlayer()) {
-		player->sendTextMessage(MESSAGE_FAILURE, "O jogador com este nome não está online.");
+		player->sendTextMessage(MESSAGE_FAILURE, "Este jogador não está online.");
 	} else {
 		std::ostringstream ss;
-		ss << "Message sent to " << toPlayer->getName() << '.';
+		ss << "Você enviou uma mensagem para " << toPlayer->getName() << '.';
 		player->sendTextMessage(MESSAGE_FAILURE, ss.str());
 	}
 	return true;
@@ -5673,6 +5673,12 @@ bool Game::combatChangeHealth(Creature* attacker, Creature* target, CombatDamage
 					continue;
 				}
 
+				if (damage.primary.type == COMBAT_HEALING && target && target->getMonster()) {
+					if (target != attacker) {
+						return false;
+					}
+				}
+				
 				if (tmpPlayer == attackerPlayer && attackerPlayer != targetPlayer) {
 					ss.str({});
 					ss << "You heal " << target->getNameDescription() << " for " << damageString;
@@ -6673,9 +6679,9 @@ bool Game::gameIsDay()
 
 void Game::shutdown()
 {
-  webhook_send_message("O servidor está sendo reiniciado", "Reiniciando...", WEBHOOK_COLOR_OFFLINE);
+  webhook_send_message("Server is shutting down", "Shutting down...", WEBHOOK_COLOR_OFFLINE);
 
-	SPDLOG_INFO("Reiniciando...");
+	SPDLOG_INFO("Shutting down...");
 
 	g_scheduler.shutdown();
 	g_databaseTasks.shutdown();
@@ -6691,7 +6697,7 @@ void Game::shutdown()
 
 	ConnectionManager::getInstance().closeAll();
 
-	SPDLOG_INFO("Reiniciado!");
+	SPDLOG_INFO("Done!");
 }
 
 void Game::cleanup()
@@ -7074,7 +7080,7 @@ void Game::sendGuildMotd(uint32_t playerId)
 
 	Guild* guild = player->getGuild();
 	if (guild) {
-		player->sendChannelMessage("Mensagem do Dia:", guild->getMotd(), TALKTYPE_CHANNEL_R1, CHANNEL_GUILD);
+		player->sendChannelMessage("Mensagem do Dia", guild->getMotd(), TALKTYPE_CHANNEL_R1, CHANNEL_GUILD);
 	}
 }
 
@@ -8647,14 +8653,6 @@ bool Game::reload(ReloadTypes_t reloadType)
 		}
 		case RELOAD_TYPE_RAIDS: return raids.reload() && raids.startup();
 
-		case RELOAD_TYPE_SPELLS: {
-			if (!g_spells->reload()) {
-				SPDLOG_WARN("[Game::reload] - Failed to reload spells.");
-				std::terminate();
-			}
-			return true;
-		}
-
 		case RELOAD_TYPE_SCRIPTS: {
 			// commented out stuff is TODO, once we approach further in revscriptsys
 			g_actions->clear(true);
@@ -8670,11 +8668,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 		}
 
 		default: {
-			if (!g_spells->reload()) {
-				SPDLOG_WARN("[Game::reload] - Failed to reload spells.");
-				std::terminate();
-			}
-
+			
 			g_config.reload();
 			Npcs::reload();
 			raids.reload() && raids.startup();

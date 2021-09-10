@@ -53,7 +53,7 @@ CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 			if (params.valueCallback) {
 				params.valueCallback->getMinMaxValues(player, damage, params.useCharges);
 			} else if (formulaType == COMBAT_FORMULA_LEVELMAGIC) {
-				int32_t levelFormula = player->getLevel() * 2 + player->getMagicLevel() * 4;
+				int32_t levelFormula = player->getLevel() * 2 + player->getMagicLevel() * 5;
 				damage.primary.value = normal_random(
 					static_cast<int32_t>(levelFormula * mina + minb),
 					static_cast<int32_t>(levelFormula * maxa + maxb)
@@ -63,7 +63,7 @@ CombatDamage Combat::getCombatDamage(Creature* creature, Creature* target) const
 				const Weapon* weapon = g_weapons->getWeapon(tool);
 				if (weapon) {
 					damage.primary.value = normal_random(
-							static_cast<int32_t>(minb),
+						static_cast<int32_t>(minb),
 						static_cast<int32_t>(weapon->getWeaponDamage(player, target, tool, true) * maxa + maxb)
 					);
 
@@ -355,7 +355,7 @@ ReturnValue Combat::canDoCombat(Creature* attacker, Creature* target)
 				if (target->isSummon() && target->getMaster()->getPlayer() && target->getZone() == ZONE_NOPVP) {
 					return RETURNVALUE_ACTIONNOTPERMITTEDINANOPVPZONE;
 				}
-	
+
 			} else if (attacker->getMonster()) {
 				const Creature* targetMaster = target->getMaster();
 
@@ -867,6 +867,12 @@ void Combat::doCombatHealth(Creature* caster, Creature* target, CombatDamage& da
 			&& (caster == target || canCombat)
 			&& (params.impactEffect != CONST_ME_NONE)) {
 		g_game.addMagicEffect(target->getPosition(), params.impactEffect);
+	}
+
+	if (params.combatType == COMBAT_HEALING && target->getMonster()){
+		if (target != caster)		{
+			return;
+		}
 	}
 
 	if(caster && caster->getPlayer()){

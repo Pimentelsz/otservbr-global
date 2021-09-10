@@ -2065,6 +2065,7 @@ class Player final : public Creature, public Cylinder
 		uint32_t conditionImmunities = 0;
 		uint32_t conditionSuppressions = 0;
 		uint32_t level = 1;
+        uint32_t getReborn() const;
 		uint32_t magLevel = 0;
 		uint32_t actionTaskEvent = 0;
 		uint32_t actionTaskEventPush = 0;
@@ -2134,8 +2135,6 @@ class Player final : public Creature, public Cylinder
 		int32_t UsedRunesBit = 0;
 		int32_t UnlockedRunesBit = 0;
 		std::pair<ConditionType_t, uint64_t> cleanseCondition = {CONDITION_NONE, 0};
-
-                uint32_t getReborn() const;
 
 		// New Prey
 		uint16_t preyBonusRerolls = 0;

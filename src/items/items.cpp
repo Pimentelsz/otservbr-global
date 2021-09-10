@@ -643,9 +643,9 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 				it.weaponType = WEAPON_WAND;
 			} else if (tmpStrValue == "ammunition") {
 				it.weaponType = WEAPON_AMMO;
-			} else if (tmpStrValue == "fist") {
+            } else if (tmpStrValue == "fist") {
 				it.weaponType = WEAPON_FIST;
-                        } else if (tmpStrValue == "quiver") {
+            } else if (tmpStrValue == "quiver") {
 				it.weaponType = WEAPON_QUIVER;
 			} else {
 				SPDLOG_WARN("[Items::parseItemNode] - Unknown weaponType: {}",
@@ -736,19 +736,19 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 		} else if (tmpStrValue == "healthgain") {
 			Abilities& abilities = it.getAbilities();
 			abilities.regeneration = true;
-			abilities.healthGain = pugi::cast<uint32_t>(valueAttribute.value());
+			abilities.setHealthGain(pugi::cast<uint32_t>(valueAttribute.value()));
 		} else if (tmpStrValue == "healthticks") {
 			Abilities& abilities = it.getAbilities();
 			abilities.regeneration = true;
-			abilities.healthTicks = pugi::cast<uint32_t>(valueAttribute.value());
+			abilities.setHealthTicks(pugi::cast<uint32_t>(valueAttribute.value()));
 		} else if (tmpStrValue == "managain") {
 			Abilities& abilities = it.getAbilities();
 			abilities.regeneration = true;
-			abilities.manaGain = pugi::cast<uint32_t>(valueAttribute.value());
+			abilities.setManaGain(pugi::cast<uint32_t>(valueAttribute.value()));
 		} else if (tmpStrValue == "manaticks") {
 			Abilities& abilities = it.getAbilities();
 			abilities.regeneration = true;
-			abilities.manaTicks = pugi::cast<uint32_t>(valueAttribute.value());
+			abilities.setManaTicks(pugi::cast<uint32_t>(valueAttribute.value()));
 		} else if (tmpStrValue == "manashield") {
 			it.getAbilities().manaShield = valueAttribute.as_bool();
 		} else if (tmpStrValue == "skillsword") {

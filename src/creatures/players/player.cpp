@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The Forgotten Server - a free and open-source MMORPG server emulator
  * Copyright (C) 2019 Mark Samman <mark.samman@gmail.com>
  *
@@ -101,9 +101,9 @@ bool Player::setVocation(uint16_t vocId)
 	Condition* condition = getCondition(CONDITION_REGENERATION, CONDITIONID_DEFAULT);
 	if (condition) {
 		condition->setParam(CONDITION_PARAM_HEALTHGAIN, vocation->getHealthGainAmount());
-		condition->setParam(CONDITION_PARAM_HEALTHTICKS, vocation->getHealthGainTicks() * 1000);
+		condition->setParam(CONDITION_PARAM_HEALTHTICKS, vocation->getHealthGainTicks());
 		condition->setParam(CONDITION_PARAM_MANAGAIN, vocation->getManaGainAmount());
-		condition->setParam(CONDITION_PARAM_MANATICKS, vocation->getManaGainTicks() * 1000);
+		condition->setParam(CONDITION_PARAM_MANATICKS, vocation->getManaGainTicks());
 	}
 	g_game.addPlayerVocation(this);
 	return true;
@@ -307,7 +307,7 @@ int32_t Player::getWeaponSkill(const Item* item) const
 			attackSkill = getSkillLevel(SKILL_FIST);
 			break;
 		}
-
+		
 		case WEAPON_AXE: {
 			attackSkill = getSkillLevel(SKILL_AXE);
 			break;
@@ -518,7 +518,7 @@ void Player::addSkillAdvance(skills_t skill, uint64_t count)
 		skills[skill].percent = 0;
 
 		std::ostringstream ss;
-		ss << "Você avançou o nível de " << getSkillName(skill) << " para " << skills[skill].level << '.';
+		ss << "Você avançou o nível de " << getSkillName(skill) << " para o nível " << skills[skill].level << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 
 		g_creatureEvents->playerAdvance(this, skill, (skills[skill].level - 1), skills[skill].level);
@@ -1374,7 +1374,7 @@ void Player::onAttackedCreatureDisappear(bool isLogout)
 	sendCancelTarget();
 
 	if (!isLogout) {
-		sendTextMessage(MESSAGE_FAILURE, "Alvo perdido.");
+		sendTextMessage(MESSAGE_FAILURE, "Target lost.");
 	}
 }
 
@@ -1383,7 +1383,7 @@ void Player::onFollowCreatureDisappear(bool isLogout)
 	sendCancelTarget();
 
 	if (!isLogout) {
-		sendTextMessage(MESSAGE_FAILURE, "Alvo perdido.");
+		sendTextMessage(MESSAGE_FAILURE, "Target lost.");
 	}
 }
 
@@ -2017,7 +2017,7 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 		g_creatureEvents->playerAdvance(this, SKILL_LEVEL, prevLevel, level);
 
 		std::ostringstream ss;
-		ss << "Você avançou do nível " << prevLevel << " para o nível " << level << '.';
+        ss << "Você avançou do nível " << prevLevel << " para o nível " << level << '.';
 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 	}
 
@@ -3296,7 +3296,7 @@ void Player::stashContainer(StashContainerList itemDict)
 	}
 
 	if (totalStowed == 0) {
-		sendCancelMessage("Sorry, not possible.");
+		sendCancelMessage("Desculpe, não é possível.");
 		return;
 	}
 
@@ -3847,7 +3847,7 @@ void Player::onAddCombatCondition(ConditionType_t type)
 {
 	switch (type) {
 		case CONDITION_POISON:
-			sendTextMessage(MESSAGE_FAILURE, "Voce está envenenado.");
+			sendTextMessage(MESSAGE_FAILURE, "Você está envenenado.");
 			break;
 
 		case CONDITION_DROWN:
@@ -4168,7 +4168,7 @@ void Player::changeMana(int32_t manaChange)
 void Player::changeSoul(int32_t soulChange)
 {
 	if (soulChange > 0) {
-		soul += std::min<int32_t>(soulChange, vocation->getSoulMax() - soul);
+		soul += std::min<int32_t>(soulChange * g_config.getFloat(ConfigManager::RATE_SOUL_REGEN), vocation->getSoulMax() - soul);
 	} else {
 		soul = std::max<int32_t>(0, soul + soulChange);
 	}
@@ -4806,7 +4806,7 @@ uint8_t Player::getCurrentMount() const
 	return 0;
 }
 
-uint32_t Player::getReborn() const
+uint8_t Player::getReborn() const
 {
 	int32_t value;
 	if (getStorageValue(5123513, value)) {
@@ -5067,7 +5067,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 
 		if (currSkillLevel != skills[skill].level) {
 			std::ostringstream ss;
-			ss << "Você avançou o nível de " << getSkillName(skill) << " para " << skills[skill].level << '.';
+			ss << "Você avançou o nível de " << getSkillName(skill) << " para o nível " << skills[skill].level << '.';
 			sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
 		}
 

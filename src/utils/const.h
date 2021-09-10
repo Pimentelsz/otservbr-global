@@ -441,8 +441,8 @@ enum WeaponType_t : uint8_t {
 	WEAPON_DISTANCE,
 	WEAPON_WAND,
 	WEAPON_AMMO,
-        WEAPON_QUIVER,
-        WEAPON_FIST,
+    WEAPON_FIST,
+    WEAPON_QUIVER,
 };
 
 enum Ammo_t : uint8_t {
@@ -675,7 +675,6 @@ enum ReloadTypes_t : uint8_t  {
 	RELOAD_TYPE_NPCS,
 	RELOAD_TYPE_RAIDS,
 	RELOAD_TYPE_SCRIPTS,
-	RELOAD_TYPE_SPELLS,
 	RELOAD_TYPE_STAGES,
 };
 

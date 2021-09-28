@@ -1,4 +1,4 @@
-ï»¿/**
+/**
  * The Forgotten Server - a free and open-source MMORPG server emulator
  * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
  *
@@ -253,13 +253,13 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 
 		if (g_game.getGameState() == GAME_STATE_CLOSING && !player->hasFlag(PlayerFlag_CanAlwaysLogin))
 		{
-			disconnectClient("O servidor estÃ¡ sendo reiniciado.\nPor favor, tente novamente mais tarde.");
+			disconnectClient("O servidor está sendo reiniciado.\nPor favor, tente novamente mais tarde.");
 			return;
 		}
 
 		if (g_game.getGameState() == GAME_STATE_CLOSED && !player->hasFlag(PlayerFlag_CanAlwaysLogin))
 		{
-			disconnectClient("O servidor estÃ¡ em manuntenÃ§Ã£o.\nPor favor, tente novamente mais tarde.");
+			disconnectClient("O servidor está em manuntenção.\nPor favor, tente novamente mais tarde.");
 			return;
 		}
 
@@ -288,12 +288,12 @@ void ProtocolGame::login(const std::string &name, uint32_t accountId, OperatingS
 				std::ostringstream ss;
 				if (banInfo.expiresAt > 0)
 				{
-					ss << "A sua conta estÃ¡ banida atÃ© o dia " << formatDateShort(banInfo.expiresAt) << ".\n\nMotivo:\n"
+					ss << "A sua conta está banida até o dia " << formatDateShort(banInfo.expiresAt) << ".\n\nMotivo:\n"
 					   << banInfo.reason;
 				}
 				else
 				{
-					ss << "A sua conta estÃ¡ banida permanentemente.\n\nMotivo:\n"
+					ss << "A sua conta está banida permanentemente.\n\nMotivo:\n"
 					   << banInfo.reason;
 				}
 				disconnectClient(ss.str());
@@ -543,23 +543,23 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 	if (clientVersion != g_config.getNumber(ConfigManager::CLIENT_VERSION) && (allowClientOld && version != 1100))
 	{
 		std::ostringstream ss;
-		ss << "Apenas a versÃ£o " << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
+		ss << "Apenas a versão " << g_config.getString(ConfigManager::CLIENT_VERSION_STR);
 		if (allowClientOld)
 			ss << " e 10.00";
-			ss << " sÃ£o permitidos!";
+			ss << " são permitidos!";
 			disconnectClient(ss.str());
 		return;
 	}
 
 	if (g_game.getGameState() == GAME_STATE_STARTUP)
 	{
-		disconnectClient("O servidor estÃ¡ sendo iniciado. Por favor, tente novamente mais tarde.");
+		disconnectClient("O servidor está sendo iniciado. Por favor, tente novamente mais tarde.");
 		return;
 	}
 
 	if (g_game.getGameState() == GAME_STATE_MAINTAIN)
 	{
-		disconnectClient("O servidor estÃ¡ em manuntenÃ§Ã£o. Por favor, tente novamente mais tarde.");
+		disconnectClient("O servidor está em manuntenção. Por favor, tente novamente mais tarde.");
 		return;
 	}
 
@@ -572,7 +572,7 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg)
 		}
 
 		std::ostringstream ss;
-		ss << "O seu IP estÃ¡ banido atÃ© " << formatDateShort(banInfo.expiresAt) << ".\n\nMotivo:\n"
+		ss << "O seu IP está banido até " << formatDateShort(banInfo.expiresAt) << ".\n\nMotivo:\n"
 		   << banInfo.reason;
 		disconnectClient(ss.str());
 		return;
@@ -2844,19 +2844,17 @@ void ProtocolGame::sendCreatureType(const Creature *creature, uint8_t creatureTy
 	NetworkMessage msg;
 	msg.addByte(0x95);
 	msg.add<uint32_t>(creature->getID());
-	msg.addByte(creatureType);
-
-	if (player->getOperatingSystem() == CLIENTOS_WINDOWS && version >= 1200)
-	{
-		msg.addByte(creatureType); // type or any byte idk
+	if (creatureType == CREATURETYPE_SUMMON_OTHERS) {
+		creatureType = CREATURETYPE_SUMMON_PLAYER;
 	}
 
-	if (creatureType == CREATURETYPE_SUMMONPLAYER && version >= 1200)
-	{
-		const Creature *master = creature->getMaster();
-		if (master)
-		{
+	msg.addByte(creatureType); // type or any byte idk
+	if (creatureType == CREATURETYPE_SUMMON_PLAYER) {
+		const Creature* master = creature->getMaster();
+		if (master) {
 			msg.add<uint32_t>(master->getID());
+		} else {
+			msg.add<uint32_t>(0);
 		}
 	}
 
@@ -6269,7 +6267,7 @@ void ProtocolGame::AddCreature(NetworkMessage &msg, const Creature *creature, bo
 			msg.addByte(creatureType);
 		}
 
-		if (version >= 1200 && creatureType == CREATURETYPE_SUMMONPLAYER)
+		if (version >= 1200 && creatureType == CREATURETYPE_SUMMON_PLAYER)
 		{
 			const Creature *master = creature->getMaster();
 			if (master)
@@ -6353,7 +6351,7 @@ void ProtocolGame::AddCreature(NetworkMessage &msg, const Creature *creature, bo
 			const Player *masterPlayer = master->getPlayer();
 			if (masterPlayer)
 			{
-				creatureType = CREATURETYPE_SUMMONPLAYER;
+				creatureType = CREATURETYPE_SUMMON_PLAYER;
 			}
 		}
 	}
@@ -6367,7 +6365,7 @@ void ProtocolGame::AddCreature(NetworkMessage &msg, const Creature *creature, bo
 		msg.addByte(creatureType); // Type (for summons)
 	}
 
-	if (version >= 1200 && creatureType == CREATURETYPE_SUMMONPLAYER)
+	if (version >= 1200 && creatureType == CREATURETYPE_SUMMON_PLAYER)
 	{
 		const Creature *master = creature->getMaster();
 		if (master)
@@ -6967,7 +6965,7 @@ void ProtocolGame::reloadCreature(const Creature *creature)
 void ProtocolGame::sendOpenStash()
 {
 	if (version < 1200) {
-		player->sendCancelMessage("Ã‰ necessÃ¡rio estar conectado na versÃ£o 12+ para utilizar o Stash.");
+		player->sendCancelMessage("É necessário estar conectado na versão 12+ para utilizar o Stash.");
 		return;
 	}
 	NetworkMessage msg;
@@ -6985,12 +6983,12 @@ void ProtocolGame::sendOpenStash()
 void ProtocolGame::parseStashWithdraw(NetworkMessage &msg)
 {
 	if (!player->isSupplyStashMenuAvailable()) {
-		player->sendCancelMessage("VocÃª nÃ£o pode usar o Stash agora.");
+		player->sendCancelMessage("Você não pode usar o Stash agora.");
 		return;
 	}
 
 	if (player->isStashExhausted()) {
-		player->sendCancelMessage("VocÃª precisa esperar para fazer isso novamente.");
+		player->sendCancelMessage("Você precisa esperar para fazer isso novamente.");
 		return;
 	}
 

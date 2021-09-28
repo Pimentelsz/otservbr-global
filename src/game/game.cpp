@@ -4775,19 +4775,19 @@ void Game::playerRequestAddVip(uint32_t playerId, const std::string& name)
 		bool specialVip;
 		std::string formattedName = name;
 		if (!IOLoginData::getGuidByNameEx(guid, specialVip, formattedName)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "NÃ£o existe nenhum jogador com este nome.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Não existe nenhum jogador com este nome.");
 			return;
 		}
 
 		if (specialVip && !player->hasFlag(PlayerFlag_SpecialVIP)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "VocÃª nÃ£o pode adicionar este jogador.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Você não pode adicionar este jogador.");
 			return;
 		}
 
 		player->addVIP(guid, formattedName, VIPSTATUS_OFFLINE);
 	} else {
 		if (vipPlayer->hasFlag(PlayerFlag_SpecialVIP) && !player->hasFlag(PlayerFlag_SpecialVIP)) {
-			player->sendTextMessage(MESSAGE_FAILURE, "VocÃª nÃ£o pode adicionar este jogador.");
+			player->sendTextMessage(MESSAGE_FAILURE, "Você não pode adicionar este jogador.");
 			return;
 		}
 
@@ -5006,7 +5006,7 @@ void Game::playerSay(uint32_t playerId, uint16_t channelId, SpeakClasses type,
 	uint32_t muteTime = player->isMuted();
 	if (muteTime > 0) {
 		std::ostringstream ss;
-		ss << "VocÃª estÃ¡ silenciado por " << muteTime << " segundos.";
+		ss << "Você está silenciado por " << muteTime << " segundos.";
 		player->sendTextMessage(MESSAGE_FAILURE, ss.str());
 		return;
 	}
@@ -5136,7 +5136,7 @@ bool Game::playerSpeakTo(Player* player, SpeakClasses type, const std::string& r
 {
 	Player* toPlayer = getPlayerByName(receiver);
 	if (!toPlayer) {
-		player->sendTextMessage(MESSAGE_FAILURE, "Este jogador nÃ£o estÃ¡ online.");
+		player->sendTextMessage(MESSAGE_FAILURE, "Este jogador não está online.");
 		return false;
 	}
 
@@ -5150,10 +5150,10 @@ bool Game::playerSpeakTo(Player* player, SpeakClasses type, const std::string& r
 	toPlayer->onCreatureSay(player, type, text);
 
 	if (toPlayer->isInGhostMode() && !player->isAccessPlayer()) {
-		player->sendTextMessage(MESSAGE_FAILURE, "Este jogador nÃ£o estÃ¡ online.");
+		player->sendTextMessage(MESSAGE_FAILURE, "Este jogador não está online.");
 	} else {
 		std::ostringstream ss;
-		ss << "VocÃª enviou uma mensagem para " << toPlayer->getName() << '.';
+		ss << "Você enviou uma mensagem para " << toPlayer->getName() << '.';
 		player->sendTextMessage(MESSAGE_FAILURE, ss.str());
 	}
 	return true;
@@ -5193,11 +5193,15 @@ bool Game::internalCreatureTurn(Creature* creature, Direction dir)
 	}
 	creature->setDirection(dir);
 
-	//send to client
+	// Send to client
 	SpectatorHashSet spectators;
 	map.getSpectators(spectators, creature->getPosition(), true, true);
 	for (Creature* spectator : spectators) {
-		spectator->getPlayer()->sendCreatureTurn(creature);
+		Player* tmpPlayer = spectator->getPlayer();
+		if(!tmpPlayer) {
+			continue;
+		}
+		tmpPlayer->sendCreatureTurn(creature);
 	}
 	return true;
 }
@@ -6554,24 +6558,21 @@ void Game::checkImbuements()
 
 		bool needUpdate = false;
 		uint8_t slots = Item::items[item->getID()].imbuingSlots;
+		int32_t index = player ? player->getThingIndex(item) : -1;
 		for (uint8_t slot = 0; slot < slots; slot++) {
 			uint32_t info = item->getImbuement(slot);
 			int32_t duration = info >> 8;
 			int32_t newDuration = std::max(0, (duration - (EVENT_IMBUEMENTINTERVAL * EVENT_IMBUEMENT_BUCKETS) / 690));
 			if (duration > 0 && newDuration == 0) {
 				needUpdate = true;
-			}
-		}
-
-		int32_t index = player ? player->getThingIndex(item) : -1;
-		needUpdate = needUpdate && index != -1;
-
-		if (needUpdate) {
-			player->postRemoveNotification(item, player, index);
-			ReleaseItem(item);
-			it = imbuedItems[bucket].erase(it);
-			for (uint8_t slot = 0; slot < slots; slot++) {
-				item->setImbuement(slot, 0);
+				if (index != -1)
+				{
+					needUpdate = true;
+					player->postRemoveNotification(item, player, index);
+					ReleaseItem(item);
+					it = imbuedItems[bucket].erase(it);
+					item->setImbuement(slot, 0);
+				}
 			}
 		}
 
@@ -6812,17 +6813,32 @@ void Game::updateCreatureType(Creature* creature)
 		if (master) {
 			masterPlayer = master->getPlayer();
 			if (masterPlayer) {
-				creatureType = CREATURETYPE_SUMMONPLAYER;
+				creatureType = CREATURETYPE_SUMMON_OTHERS;
 			}
 		}
 	}
 
-	//send to clients
+	if (creature->isHealthHidden()) {
+		creatureType = CREATURETYPE_HIDDEN;
+	}
+
+	// Send to clients
 	SpectatorHashSet spectators;
 	map.getSpectators(spectators, creature->getPosition(), true, true);
 
-	for (Creature* spectator : spectators) {
-		spectator->getPlayer()->sendCreatureType(creature, creatureType);
+	if (creatureType == CREATURETYPE_SUMMON_OTHERS) {
+		for (Creature* spectator : spectators) {
+			Player* player = spectator->getPlayer();
+			if (masterPlayer == player) {
+				player->sendCreatureType(creature, CREATURETYPE_SUMMON_PLAYER);
+			} else {
+				player->sendCreatureType(creature, creatureType);
+			}
+		}
+	} else {
+		for (Creature* spectator : spectators) {
+			spectator->getPlayer()->sendCreatureType(creature, creatureType);
+		}
 	}
 }
 
@@ -7387,26 +7403,21 @@ void Game::playerNpcGreet(uint32_t playerId, uint32_t npcId)
 		return;
 	}
 
-	Creature* creature = getCreatureByID(npcId);
-	if (!creature) {
+	Npc* npc = getNpcByID(npcId);
+	if (!npc) {
 		return;
 	}
 
-	Npc* npc = creature->getNpc();
-	if(npc) {
-		SpectatorHashSet spectators;
-		spectators.insert(npc);
-		map.getSpectators(spectators, player->getPosition(), true, true);
-		internalCreatureSay(player, TALKTYPE_SAY, "Hi", false, &spectators);
-		spectators.clear();
-		spectators.insert(npc);
-		if (npc->getSpeechBubble() == SPEECHBUBBLE_TRADE) {
-			internalCreatureSay(player, TALKTYPE_PRIVATE_PN, "Trade", false, &spectators);
-		} else {
-			internalCreatureSay(player, TALKTYPE_PRIVATE_PN, "Sail", false, &spectators);
-        }
-
-		return;
+	SpectatorHashSet spectators;
+	spectators.insert(npc);
+	map.getSpectators(spectators, player->getPosition(), true, true);
+	internalCreatureSay(player, TALKTYPE_SAY, "hi", false, &spectators);
+	spectators.clear();
+	spectators.insert(npc);
+	if (npc->getSpeechBubble() == SPEECHBUBBLE_TRADE) {
+		internalCreatureSay(player, TALKTYPE_PRIVATE_PN, "trade", false, &spectators);
+	} else {
+		internalCreatureSay(player, TALKTYPE_PRIVATE_PN, "sail", false, &spectators);
 	}
 }
 
